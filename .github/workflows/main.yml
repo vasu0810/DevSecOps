@@ -37,7 +37,7 @@ jobs:
           curl --fail -i -X POST http://localhost:8001/v1/gatekeeper/evaluate \
           -H "Content-Type: application/json" \
           -d '{
-                "environment": "prod", 
+                "environment": "dev", 
                 "public_exposure": 0, 
                 "mitre_tactic_score": 0.1,
                 "encryption_disabled": 0
