@@ -35,12 +35,10 @@ jobs:
           curl --fail -i -X POST http://localhost:8001/v1/gatekeeper/evaluate \
           -H "Content-Type: application/json" \
           -d '{
-                "environment": "prod",
+                "environment": "dev",
                 "public_exposure": 0,
-                "mitre_tactic_score": 0.01,
-                "encryption_disabled": 0,
-                "severity_weight": 0.1,
-                "privilege_level": 0
+                "mitre_tactic_score": 0.05,
+                "encryption_disabled": 0
               }'
 
       # 5. This step ONLY runs if the Gatekeeper returns 'ALLOW' (200 OK)
