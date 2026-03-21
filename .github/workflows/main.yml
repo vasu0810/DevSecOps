@@ -1,0 +1,58 @@
+name: AI-DevSecOps-Final-Gate
+
+# Controls when the workflow will run
+on:
+  push:
+    branches: [ "main" ]  # Runs every time you push to the main branch
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  security-enforcement:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Pulls your source code from GitHub into the runner
+      - name: 1. Checkout Code
+        uses: actions/checkout@v4
+
+      # 2. Builds and starts your Docker-Compose infrastructure
+      - name: 2. Start AI & OPA Infrastructure
+        run: |
+          docker-compose up -d --build
+          echo "Infrastructure is booting up..."
+
+      # 3. Critical: Wait for Python and OPA services to be healthy
+      - name: 3. Wait for Services
+        run: sleep 20
+
+      # 4. The "Gatekeeper" Test (Stage 15 Integration Point)
+      # We send a High-Risk payload to verify the 'BLOCK' logic works.
+      - name: 4. Execute AI Risk Enforcement
+        run: |
+          echo "Triggering Security Evaluation for High-Risk Deployment..."
+          
+          # The --fail flag is vital: it makes the step fail if HTTP 403 is returned
+          curl --fail -i -X POST http://localhost:8001/v1/gatekeeper/evaluate \
+          -H "Content-Type: application/json" \
+          -d '{
+                "environment": "prod", 
+                "public_exposure": 1, 
+                "mitre_tactic_score": 0.9,
+                "encryption_disabled": 1
+              }'
+
+      # 5. This step ONLY runs if the Gatekeeper returns 'ALLOW' (200 OK)
+      - name: 5. Deploy to Production
+        if: success()
+        run: |
+          echo "🚀 AI Verdict: ALLOWED"
+          echo "Proceeding with Production Deployment..."
+
+      # 6. This step ONLY runs if the Gatekeeper returns 'BLOCK' (403 Forbidden)
+      - name: 6. Handle Security Block
+        if: failure()
+        run: |
+          echo "❌ AI Verdict: BLOCKED"
+          echo "Security risk detected. Pipeline terminated to protect Production."

@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  ai-gatekeeper:
+    build: .
+    container_name: ai_gatekeeper
+    ports:
+      - "8001:8001"
+    environment:
+      - OPA_URL=http://opa-service:8181/v1/data/policy/allow
+    networks:
+      - gatekeeper-net
+
+  opa-service:
+    image: openpolicyagent/opa:latest
+    container_name: opa_service
+    ports:
+      - "8181:8181"
+    volumes:
+      - ./governance:/policies
+    command: ["run", "--server", "--watch", "/policies"]
+    networks:
+      - gatekeeper-net
+
+networks:
+  gatekeeper-net:
+    driver: bridge

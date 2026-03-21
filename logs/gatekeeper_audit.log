@@ -1,0 +1,6 @@
+2026-03-17 00:19:30,298 | INFO | ENV: PROD | VERDICT: BLOCK | DETAILS: Public exposure is strictly forbidden in Production regardless of AI risk score.
+2026-03-17 00:21:27,012 | INFO | ENV: PROD | VERDICT: BLOCK | DETAILS: Public exposure is strictly forbidden in Production regardless of AI risk score.
+2026-03-17 00:21:57,929 | INFO | ENV: PROD | VERDICT: BLOCK | DETAILS: Public exposure is strictly forbidden in Production regardless of AI risk score.
+2026-03-17 00:33:55,606 | INFO | ENV: PROD | VERDICT: BLOCK | DETAILS: OPA_DENY: Public exposure strictly forbidden in Production.
+2026-03-17 00:47:05,109 | INFO | ENV: PROD | VERDICT: BLOCK | DETAILS: OPA_DENY: Public exposure strictly forbidden in Production. | AI_BLOCK: Risk score 0.7211 exceeds threshold.
+2026-03-17 01:02:33,411 | INFO | ENV: PROD | VERDICT: BLOCK | DETAILS: OPA_DENY: Public exposure strictly forbidden in Production. | AI_BLOCK: Risk score 0.7211 exceeds threshold.
