@@ -5,90 +5,89 @@ import requests
 import json
 from fastapi import FastAPI, Response, status 
 
-# Ensure core_ai modules are recognized
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+# --- 🛠️ 1. DOCKER PATH RESOLUTION ---
+# This ensures Python can see the 'core_ai' folder inside the container
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(BASE_DIR)
 
+# --- 🛠️ 2. SAFE IMPORTS ---
 try:
     from core_ai.risk_engine import evaluate_deployment
     from core_ai.logger_service import log_security_decision
     from core_ai.explainable_ai import explain_decision
+    print("✅ Core AI modules loaded successfully.")
 except ImportError as e:
     print(f"❌ Critical Module Import Error: {e}")
+    # Default behavior so the server doesn't 500-crash if a file is missing
+    def evaluate_deployment(x): return {"risk_score": 0.8, "threshold": 0.5}
 
-# Service discovery for Docker networking
 OPA_URL = os.getenv("OPA_URL", "http://opa-service:8181/v1/data/policy/allow")
 
-app = FastAPI(
-    title="Hybrid AI-DevSecOps Gatekeeper", 
-    description="M.Tech Final Stage 15: Full CI/CD Enforcement",
-    version="1.5.0"
-)
+app = FastAPI(title="Hybrid Gatekeeper Stage 15")
 
-# --- 🏠 ROOT ENDPOINT ---
-@app.get("/", tags=["Health"])
+@app.get("/")
 async def root():
-    return {
-        "status": "Online",
-        "mode": "CI-CD-Enforcement-Active",
-        "stage": "15_FINAL",
-        "documentation": "/docs"
-    }
+    return {"status": "Online", "mode": "CI-CD-Enforcement"}
 
-# --- 🛡️ GOVERNANCE LOGIC ---
-def opa_policy_check(data, ai_score, threshold):
+# --- 🛡️ HYBRID POLICY LOGIC ---
+def run_hybrid_checks(data, ai_score, threshold):
     violations = []
     
+    # Python Policy
     if data.get('encryption_disabled') == 1:
         violations.append("PY_DENY: Encryption disabled.")
         
     if data.get('environment') == 'prod' and data.get('public_exposure') == 1:
         violations.append("PY_DENY: Public exposure forbidden in Production.")
     
+    # OPA Policy
     try:
-        opa_resp = requests.post(OPA_URL, json={"input": data}, timeout=2)
-        if opa_resp.status_code == 200:
-            result = opa_resp.json().get("result", False)
-            if result is False: 
-                violations.append("OPA_DENY: External policy container rejected this.")
+        opa_resp = requests.post(OPA_URL, json={"input": data}, timeout=3)
+        if opa_resp.status_code == 200 and opa_resp.json().get("result") is False:
+            violations.append("OPA_DENY: Governance rejection.")
     except Exception:
-        print("⚠️ Warning: OPA Service unreachable.")
+        print("⚠️ OPA Service unreachable.")
 
+    # AI Risk Policy
     if ai_score > threshold:
-        violations.append(f"AI_BLOCK: Risk score {ai_score:.4f} exceeds threshold.")
+        violations.append(f"AI_BLOCK: Risk score {ai_score:.2f} too high.")
         
     return {"allow": len(violations) == 0, "violations": violations}
 
 # --- 🌐 EVALUATION ENDPOINT ---
 @app.post("/v1/gatekeeper/evaluate")
 async def evaluate(payload: dict, response: Response):
-    # 1. AI Inference
-    ai_result = evaluate_deployment(payload)
-    ai_score, threshold = ai_result['risk_score'], ai_result['threshold']
-    
-    # 2. Hybrid Policy Check
-    gov_result = opa_policy_check(payload, ai_score, threshold)
-    
-    # 3. Final Verdict
-    final_decision = "BLOCK" if not gov_result['allow'] else "ALLOW"
-    reason = " | ".join(gov_result['violations']) if not gov_result['allow'] else "Passed"
-    
-    # 4. Log and Explain
-    log_security_decision(payload, {"decision": final_decision, "reason": reason})
-    if final_decision == "BLOCK" and ai_score > threshold:
-        explain_decision(payload)
+    try:
+        # 1. AI Inference (Wrapped to prevent 500 error)
+        try:
+            ai_result = evaluate_deployment(payload)
+            ai_score = ai_result.get('risk_score', 0.5)
+            threshold = ai_result.get('threshold', 0.5)
+        except Exception:
+            ai_score, threshold = 0.9, 0.5 # Default to high risk if engine fails
 
-    # --- 🚀 STAGE 15 ENFORCEMENT ---
-    # Returning 403 Forbidden tells GitHub Actions to FAIL the build
-    if final_decision == "BLOCK":
+        # 2. Hybrid Decision
+        gov_result = run_hybrid_checks(payload, ai_score, threshold)
+        final_decision = "BLOCK" if not gov_result['allow'] else "ALLOW"
+        
+        # 3. Log the decision
+        try:
+            log_security_decision(payload, {"decision": final_decision})
+        except: pass
+
+        # --- 🚀 ENFORCEMENT ---
+        if final_decision == "BLOCK":
+            # This is what stops the GitHub Action
+            response.status_code = status.HTTP_403_FORBIDDEN
+            return {"verdict": "BLOCK", "violations": gov_result['violations']}
+
+        return {"verdict": "ALLOW", "score": ai_score}
+
+    except Exception as e:
+        # THE 500-ERROR KILLER: Any global crash becomes a 403.
+        print(f"🔥 System Error: {e}")
         response.status_code = status.HTTP_403_FORBIDDEN
-
-    return {
-        "verdict": final_decision,
-        "compliance_status": "COMPLIANT" if final_decision == "ALLOW" else "NON-COMPLIANT",
-        "ai_metrics": {"score": round(ai_score, 4), "threshold": threshold},
-        "violations": gov_result['violations'],
-        "pipeline_action": "STOP_DEPLOYMENT" if final_decision == "BLOCK" else "CONTINUE_DEPLOYMENT"
-    }
+        return {"verdict": "BLOCK", "error": "Internal Processing Error"}
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8001)

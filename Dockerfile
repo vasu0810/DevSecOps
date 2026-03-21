@@ -1,15 +1,17 @@
 FROM python:3.9-slim
 
+# Set the working directory inside the container
 WORKDIR /app
 
-# Install system dependencies for scientific libraries
-RUN apt-get update && apt-get install -y build-essential && rm -rf /var/lib/apt/lists/*
-
+# 1. Copy requirements first (for faster builds)
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+# 2. IMPORTANT: Copy EVERYTHING (including core_ai, models, and governance folders)
 COPY . .
 
-EXPOSE 8001
+# 3. Set Python Path so it can find your modules
+ENV PYTHONPATH=/app
 
+# Start the server
 CMD ["python", "api_server.py"]
