@@ -47,10 +47,10 @@ jobs:
         run: |
           echo "🚀 AI Verdict: ALLOWED"
           echo "Proceeding with Production Deployment..."
-
-      # 6. This step ONLY runs if the Gatekeeper returns 'BLOCK' (403 Forbidden)
-      - name: 6. Handle Security Block
-        if: failure()
+          
+      # 6. This step now runs ALWAYS to show the final gatekeeper status
+      - name: 6. Final Gatekeeper Summary
+        if: always()
         run: |
-          echo "❌ AI Verdict: BLOCKED"
-          echo "Security risk detected. Pipeline terminated to protect Production."
+          echo "📊 Finalizing Security Audit..."
+          echo "Gatekeeper evaluation is complete. Check logs for details."
