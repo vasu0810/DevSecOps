@@ -15,3 +15,4 @@ ENV PYTHONPATH=/app
 
 # Start the server
 CMD ["python", "api_server.py"]
+EXPOSE 80

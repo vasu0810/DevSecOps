@@ -27,19 +27,10 @@ jobs:
       - name: 3. Wait for Services
         run: sleep 20
 
-      # 4. The "Gatekeeper" Test (Stage 15 Integration Point)
-      # We send a High-Risk payload to verify the 'BLOCK' logic works.
-      - name: 4. Execute AI Risk Enforcement
+      - name: 4. Execute Automatic AI Risk Enforcement
         run: |
-          echo "Triggering Security Evaluation for a PERFECT Production Deployment..."
-          curl --fail -i -X POST http://localhost:8001/v1/gatekeeper/evaluate \
-          -H "Content-Type: application/json" \
-          -d '{
-                "environment": "prod",
-                "public_exposure": 0,
-                "mitre_tactic_score": 0.05,
-                "encryption_disabled": 0
-              }'
+          pip install requests
+          python scanner.py  # This script now "finds out" if it is positive or negative
 
       # 5. This step ONLY runs if the Gatekeeper returns 'ALLOW' (200 OK)
       - name: 5. Deploy to Production
