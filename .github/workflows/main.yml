@@ -20,7 +20,7 @@ jobs:
       # 2. Builds and starts your Docker-Compose infrastructure
       - name: 2. Start AI & OPA Infrastructure
         run: |
-          docker-compose up -d --build
+          docker compose up -d --build
           echo "Infrastructure is booting up..."
 
       # 3. Critical: Wait for Python and OPA services to be healthy
