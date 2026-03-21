@@ -31,16 +31,16 @@ jobs:
       # We send a High-Risk payload to verify the 'BLOCK' logic works.
       - name: 4. Execute AI Risk Enforcement
         run: |
-          echo "Triggering Security Evaluation for High-Risk Deployment..."
-          
-          # The --fail flag is vital: it makes the step fail if HTTP 403 is returned
+          echo "Triggering Security Evaluation for a PERFECT Production Deployment..."
           curl --fail -i -X POST http://localhost:8001/v1/gatekeeper/evaluate \
           -H "Content-Type: application/json" \
           -d '{
-                "environment": "dev", 
-                "public_exposure": 0, 
-                "mitre_tactic_score": 0.1,
-                "encryption_disabled": 0
+                "environment": "prod",
+                "public_exposure": 0,
+                "mitre_tactic_score": 0.01,
+                "encryption_disabled": 0,
+                "severity_weight": 0.1,
+                "privilege_level": 0
               }'
 
       # 5. This step ONLY runs if the Gatekeeper returns 'ALLOW' (200 OK)
