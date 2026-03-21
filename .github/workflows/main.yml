@@ -38,9 +38,9 @@ jobs:
           -H "Content-Type: application/json" \
           -d '{
                 "environment": "prod", 
-                "public_exposure": 1, 
-                "mitre_tactic_score": 0.9,
-                "encryption_disabled": 1
+                "public_exposure": 0, 
+                "mitre_tactic_score": 0.1,
+                "encryption_disabled": 0
               }'
 
       # 5. This step ONLY runs if the Gatekeeper returns 'ALLOW' (200 OK)
