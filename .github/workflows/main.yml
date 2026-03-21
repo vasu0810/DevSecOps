@@ -36,9 +36,9 @@ jobs:
           -H "Content-Type: application/json" \
           -d '{
                 "environment": "prod",
-                "public_exposure": 1,
-                "mitre_tactic_score": 0.85,
-                "encryption_disabled": 1
+                "public_exposure": 0,
+                "mitre_tactic_score": 0.05,
+                "encryption_disabled": 0
               }'
 
       # 5. This step ONLY runs if the Gatekeeper returns 'ALLOW' (200 OK)
@@ -47,7 +47,7 @@ jobs:
         run: |
           echo "🚀 AI Verdict: ALLOWED"
           echo "Proceeding with Production Deployment..."
-          
+
       # 6. This step now runs ALWAYS to show the final gatekeeper status
       - name: 6. Final Gatekeeper Summary
         if: always()
