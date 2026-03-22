@@ -6,6 +6,6 @@ USER root
 
 # Add a fake "malicious" script to trigger the scanner
 RUN echo "os.system('rm -rf /')" > exploit.py
-
+USER root
 WORKDIR /app
 COPY . .
