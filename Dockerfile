@@ -1,11 +1,4 @@
-# --- NEGATIVE TEST TRIGGER ---
 FROM python:3.9-slim
-
-# Rule Violation: Running as Root (High Identity Risk)
-USER root 
-
-# Add a fake "malicious" script to trigger the scanner
-RUN echo "os.system('rm -rf /')" > exploit.py
-USER root
-WORKDIR /app
-COPY . .
+USER python
+# This line will be caught by the new Layer 2 regex
+ENV CLOUD_API_KEY="AIzaSyA1234567890-ExampleKey"
