@@ -1,17 +1,8 @@
 FROM python:3.9-slim
-
-# Set the working directory inside the container
+# Create a security user
+RUN useradd -m appuser
 WORKDIR /app
-
-# 1. Copy requirements first (for faster builds)
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
-# 2. IMPORTANT: Copy EVERYTHING (including core_ai, models, and governance folders)
 COPY . .
-
-# 3. Set Python Path so it can find your modules
-ENV PYTHONPATH=/app
-
-# Start the server
+# Fix: Switch from root to appuser
+USER appuser
 CMD ["python", "api_server.py"]
